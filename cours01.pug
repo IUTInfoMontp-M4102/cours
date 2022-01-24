@@ -1,0 +1,426 @@
+extends coursXX.pug
+
+append preamble
+  -
+    title = "Cours n°1";
+    date = "2022-01-25"
+
+block document
+  section
+    h1 Programmation répartie
+    ul
+      li Accès à des ressources communes par plusieurs processus simultanément (ex: CPU, fichier, réseau, etc.)
+      p &rarr; organiser les accès
+      .uncover
+        li Dépendances entre différentes tâches (ex: action dépend du résultat d'un calcul, attente d'un événement réseau, etc.)
+        p &rarr; synchroniser
+      .uncover
+        li Communication et coopération entre processus locaux ou distants (ex: échanger des données, stocker des résultats)
+        p &rarr; établir des canaux de communication
+      .uncover
+        li Réduction du temps d'exécution en répartissant les calculs sur plusieurs processeurs/cœurs
+        p &rarr; diviser et organiser le fonctionnement
+
+  //section
+  //  h1 Objectifs du cours
+  //  ul
+  //    li Rappels sur les processus et les <em>threads</em>
+  //    li.uncover Problèmes liés au parallélisme
+  //      ul
+  //        li Ressources critiques / limitées
+  //        li Synchronisation
+  //        li Ordonnancement
+  //        li etc.
+  //    li.uncover Communications / coopération entre processus locaux ou distants
+  //      ul
+  //        li Communication entre processus
+  //        li Communication entre <em>threads</em>
+  //        li Réalisation de services (client/serveur)
+  //  br
+  //  p.uncover Les implémentations seront faites en Java
+
+  section
+    h1 Contenu du cours
+    ul
+      li Processus et tâches
+      li.uncover Utilisation concurrentielle des ressources
+        ul
+          li Problèmes liés à la concurrence
+          li Ressources/sections critiques
+          li Exclusion mutuelle
+      li.uncover Outils
+        ul
+          li Verrous
+          li Barrières
+          li Sémaphores
+      li.uncover Synchronisation des processus
+      li.uncover Communication entre processus distants
+        ul
+          li Boîtes aux lettres
+          li Sockets
+          li Modèle client/serveur
+
+  section
+    .side
+      h1 Concurrence
+      ul
+        li Intervalles d'exécution qui se chevauchent
+        li Peut se faire avec un seul processeur
+        li On peut simuler du parallélisme avec du <em>time slicing</em>
+      br
+      img(src="cours01/concurrent.png")
+
+      br
+      .uncover
+        p Ex :
+        ul
+          li coroutines
+          li interruptions et attente I/O
+          li processus dans un système d'exploitation multi-tâches
+
+    .side
+      h1 Parallélisme
+      ul
+        li Exécutions simultanées
+        li Nécessite plusieurs processeurs (un par tâche parallèle)
+      br
+      br
+      img(src="cours01/parallel.png")
+
+      .uncover(data-start="+0")
+        br
+        p Ex :
+        ul
+          li calculs parallèles sur réseau
+          li processeur multi-cœurs
+          li traitement d'images
+
+  .section-counter
+  section.section
+    h1 Rappels
+
+  section
+    h1 Processus
+    .side
+      img(src="cours01/stack-process.svg")
+    .side
+      p Programme en cours d'exécution (un même programme peut être lancé plusieurs fois)
+      br
+      ul
+        li Espace d'adressage propre (chaque processus a sa propre mémoire)
+        li Deux processus peuvent être sur des machines différentes
+        li Peut être interrompu et réactivé en sauvegardant son état
+
+  section
+    h1 <em>Thread</em>
+    .side
+      img(src="cours01/stack-thread.svg")
+    .side
+      p Processus légers : subdivisions d'un processus
+      ul
+        li Partagent l'espace mémoire
+        li Chaque <em>thread</em> a son segment de pile
+        li Threads d'un même processus partagent leur code
+        li Peut être interrompu et réactivé en sauvegardant son état
+
+  section
+    h1 Communication entre processus
+    p Processus ne partagent pas leurs variables
+    p Plusieurs moyens pour communiquer (IPC) :
+    ul
+      li signaux
+      li tubes anonymes (<em>pipes</em>)
+      li FIFO (tubes nommés)
+      li Files de messages
+      li Verrous
+      li Sémaphores
+      li Segments de mémoire partagée
+      li Fichiers sur mémoire
+      li Sockets
+
+  section
+    h1 Cycle d'un processus
+    .side
+      img(src="cours01/cycle.svg" style="width: 100%" alt="cycle d'un processus")
+
+    .side
+      p Les processus ont 5 états possibles d'exécution :
+      ul
+        li <strong>Nouveau :</strong> en cours de création
+        li <strong>Prêt :</strong> toutes les ressources nécessaires sont disponibles mais pas actuellement
+          |  exécuté par le CPU
+        li <strong>Exécution :</strong> en cours d'exécution par le CPU
+        li <strong>En attente :</strong> ne peut pas poursuivre son exécution (attente clavier, fichier,
+          |  message d'un autre processus, etc.)
+        li <strong>Terminé :</strong> l'exécution est finie
+
+  section
+    h1 Exécution en Java
+    .side
+      .uncover
+        pre
+          code.java.
+            public class Prog {
+              public static void main(String[] args){
+                ...
+              }
+            }
+      .uncover
+        pre
+          code.bash.
+            $ javac Prog.java
+            $ ls
+            Prog.class	Prog.java
+          .uncover
+            code.bash.
+              $ java Prog &
+              $ ps
+               PID TTY        TIME CMD
+              4232 ttys0   0:00.03 -bash
+              4295 ttys0   0:00.04 /usr/bin/java Prog
+
+    .side
+      p Les programmes en Java sont exécutés par une machine virtuelle (JVM)
+      br
+      ul
+        li.skip.uncover(data-start=1) Un programme est une classe (<code>.java</code>) avec une méthode statique <code>main</code>
+        li.skip.uncover Compilation produit un fichier en langage machine de la JVM (<code>.class</code>)
+        li.uncover À l'exécution : nouveau processus qui <em>exécute</em> la JVM qui <em>interprète</em> le code compilé
+
+  .section-counter
+  section.section
+    h1 Processus légers<br>en Java
+
+  section
+    h1 Processus légers en Java
+    p Gérés par la classe <code>Thread</code>
+    p Peuvent être créés
+    ul
+      li en héritant de la classe <code>Thread</code>
+      li en implémentant l'interface <code>Runnable</code>
+
+  section
+    h1 Héritage de <em>Thread</em>
+    .side
+      pre
+        code.java.
+          public class Tache extends Thread {
+            ...
+
+            public void run() {
+              ...   // activité du Thread
+            }
+          }
+      .uncover
+        pre
+          code.java.
+            Tache t = new Tache(...);
+            t.start();
+    .side
+      ul
+        li Classes qui héritent de <code>Thread</code> doivent surcharger la méthode <code>run()</code>
+        li.uncover(data-start=1) Les <em>threads</em> sont lancés avec la méthode <code>start()</code> (héritée de <code>Thread</code>)
+        .uncover
+          li Lorsque le <em>thread</em> s'exécute, la JVM exécute la méthode <code>run()</code>
+          li Le <em>thread</em> se termine lorsque <code>run()</code> termine
+      br
+      p.uncover <strong>Rmq :</strong> Après l'appel à <code>start()</code> le <em>thread</em> est <em>prêt</em> mais ne démarre pas nécessairement immédiatement
+
+  section
+    h1 Exemple
+    pre
+      code.java
+        include cours01/TacheThread.java
+
+  section
+    h1 Implémentation de <em>Runnable</em>
+    .side
+      pre
+        code.java.
+          public class Tache implements Runnable {
+            ...
+
+            public void run() {
+              ...   // activité du Thread
+            }
+          }
+      pre
+        code.java.uncover.
+          Tache t = new Tache(...);
+          Thread th = new Thread(t);
+          th.start();
+    .side
+      ul
+        li L'interface <code>Runnable</code> requiert uniquement une méthode <code>void run()</code>
+        p <strong>Rmq :</strong> Cette classe n'est pas un <code>Thread</code>
+        li.uncover(data-start=1) La classe <code>Thread</code> a un constructeur qui prend en argument un <code>Runnable</code>
+        li.uncover On appelle la méthode <code>start()</code> du <em>thread</em> pour l'exécuter
+
+  section
+    h1 Exemple
+    pre
+      code.java
+        include cours01/TacheRunnable.java
+
+  section
+    h1 Méthodes de la classe <em>Thread</em>
+    p La classe <code>Thread</code> contient des méthodes pour contrôler les <em>threads</em>
+    br
+    ul
+      li.skip
+        code.java static void sleep(long millis)
+        p Bloque le <em>thread</em> pendant <em>millis</em> millisecondes
+        p <strong>Rmq :</strong> c'est une méthode <em>statique</em>
+      li.skip
+        code.java boolean isAlive()
+        p Renvoie <em>true</em> si le <em>thread</em> est encore en cours d'exécution
+      li
+        code.java Thread.State getState()
+        p Renvoie l'état d'exécution du <em>thread</em> (<code>NEW</code>, <code>RUNNABLE</code>, <code>BLOCKED</code>, <code>WAITING</code>, <code>TIMED_WAITING</code> ou <code>TERMINATED</code>)
+
+  section
+    h1 Méthodes de la classe <em>Thread</em>
+    ul
+      li.skip
+        code.java int getPriority()
+        br
+        code.java int setPriority(int newPriority)
+        p Gère la priorité d'exécution du <em>thread</em>
+        p (<code>MIN_PRIORITY</code>, <code>MAX_PRIORITY</code> ou <code>NORM_PRIORITY</code>)
+        p <strong>Rmq :</strong> priorité haute &rarr; plus de chances d'être exécuté (mais pas de garantie)
+      li
+        code.java static void yield()
+        p Le <em>thread</em> passe automatiquement de l'état <em>running</em> à <em>runnable</em> (laisse la main)
+
+  section
+    h1 <em>Threads</em> et programme principal
+    .side
+      pre.only(data-step=0)
+        code.c.
+          int main() {
+            pthread_t th;
+            pthread_create(&th, NULL, f, NULL);
+            ...
+            pthread_join(th, NULL); // attend
+            exit(0);
+          }
+      .only
+        pre
+          code.java.
+            public class Tache extends Thread {
+              public void run() {
+                for (int i = 0; i < 5; i++) {
+                  System.out.printf("%d ", i);
+                }
+              }
+
+              public static void main(String[] args){
+                Tache t1 = new Tache();
+                Tache t2 = new Tache();
+                System.out.println("Début");
+                t1.start(); t2.start();
+                System.out.println("Fin");
+              }
+            }
+        pre
+          code.bash.
+            $ java Tache
+            Début
+            Fin
+            0 1 2 3 4 0 1 2 3 4
+      .only
+        pre
+          code.java
+            | public class Tache extends Thread {
+            |   public void run() {
+            |     for (int i = 0; i &lt; 5; i++) {
+            |       System.out.printf("%d ", i);
+            |     }
+            |   }
+            |
+            |   public static void main(String[] args) {
+            |     Tache t1 = new Tache();
+            |     Tache t2 = new Tache();
+            |     System.out.println("Début");
+            |     t1.start(); t2.start();
+            |     <span class="highlight">t1.join(); t2.join();</span>
+            |     System.out.println("\nFin");
+            |   }
+            | }
+        pre
+          code.bash.
+            $ java Tache
+            Début
+            0 1 2 3 4 0 1 2 3 4
+            Fin
+    .side
+      .only(data-step=0)
+        p En C quand le programme principal (<code>main</code>) termine, le processus se termine
+        br
+        p &rarr; Pour attendre la fin d'un <em>thread</em> il faut utiliser la fonction <code>join</code>
+      .only(data-start=1)
+        p En Java les <em>threads</em> ne sont pas interrompus quand le programme principal termine
+        br
+        p &rarr; Le programme termine quand tous les <em>threads</em> lancés sont terminés
+        br
+        .uncover
+          p On peut attendre la fin d'exécution d'un <em>thread</em> avec <code>join</code>
+
+  section
+    h1 Partage de variables
+    p Les <em>threads</em> d'un même processus partagent la mémoire
+    ul
+      li accèdent aux mêmes variables globales
+      li ont leur propre pile (variables locales)
+      li les classes ne sont chargées qu'une fois (communes pour tous les <em>threads</em>) mais les instances peuvent être propres à chaque <em>thread</em>
+
+  section
+    h1 Exemple
+    .side
+      pre
+        code.java.
+          public class Tache extends Thread {
+            private static int compteur = 0;
+
+            public void run() {
+              for (int i = 0; i < 100000; i++) {
+                compteur++;
+              }
+            }
+
+            public static void main(String[] args) {
+              Tache t1 = new Tache();
+              Tache t2 = new Tache();
+              t1.start(); t2.start();
+              try {
+                t1.join(); t2.join();
+              } catch (InterruptedException e) {
+              }
+              System.out.println(compteur);
+            }
+          }
+    .side
+      .only
+        pre
+          code.bash.
+            $ javac Tache.java
+            $ java Tache
+            122513
+            $ java Tache
+            102498
+        p &rarr; Le résultat est bien en-dessous du résultat attendu (200000)
+      .only(data-start=2)
+        ul
+          .uncover(data-start="+0")
+            li Les opérations sur <code>compteur</code> ne sont pas <em>atomiques</em>
+            pre.only(data-step="+0")
+              code.java compteur++;
+            pre.only(data-start="+1")
+              code.
+                1. mov &cpt reg   // lire compteur
+                2. inc reg        // incrémenter registre
+                3. mov reg &cpt   // écrire compteur
+          .uncover
+            li Les <em>threads</em> sont interrompus par l'ordonnanceur en cours d'exécution, puis réactivés
+          .uncover
+            li Si un <em>thread</em> est interrompu <strong>entre la lecture et l'écriture</strong>, les modifications de l'autre <em>thread</em> sont perdues

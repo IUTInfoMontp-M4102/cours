@@ -1,0 +1,45 @@
+-
+  root = "https://vpoupet.github.io/myriad/slides";
+  // root = "http://localhost:63342/myriad/slides";
+  theme = "myriad";
+  language = "fr";
+  context = "M4102 - Programmation répartie";
+  author = "Victor Poupet (adapté du cours de M. Molnar)";
+  date = "";
+doctype html
+block preamble
+html(lang=language)
+  head
+    block header
+      meta(charset="UTF-8")
+      if page_title
+        title !{page_title}
+      else
+        title !{title.replace('<br>', ' ')}
+      link(rel="stylesheet" href=`${root}/slides.css`)
+      link(rel="stylesheet" href=`${root}/themes/${theme}/${theme}.css`)
+      link(rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/monokai.min.css")
+      link(rel="stylesheet" href='style.css')
+  body
+    if title
+      section.title
+        h1 !{title}
+        if subtitle
+          h2 !{subtitle}
+        .context !{context}
+        .author !{author}
+        time !{date}
+    block document
+    block footer
+      script(src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js")
+      script(type="text/javascript")
+        | document.addEventListener('DOMContentLoaded', (event) => {
+        |   hljs.configure({
+        |     languages: [],  // disable automatic language detection
+        |   });
+        |   document.querySelectorAll('code').forEach((block) => {
+        |     hljs.highlightBlock(block);
+        |   });
+        | });
+      script(src=`${root}/slides.js`)
+      script(src=`${root}/themes/${theme}/${theme}.js`)

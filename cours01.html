@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <title>Cours n°1</title>
+    <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/slides.css">
+    <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/themes/myriad/myriad.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/monokai.min.css">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <section class="title">
+      <h1>Cours n°1</h1>
+      <div class="context">M4102 - Programmation répartie</div>
+      <div class="author">Victor Poupet (adapté du cours de M. Molnar)</div>
+      <time>2022-01-25</time>
+    </section>
+    <section>
+      <h1>Programmation répartie</h1>
+      <ul>
+        <li>Accès à des ressources communes par plusieurs processus simultanément (ex: CPU, fichier, réseau, etc.)</li>
+        <p>&rarr; organiser les accès</p>
+        <div class="uncover">
+          <li>Dépendances entre différentes tâches (ex: action dépend du résultat d'un calcul, attente d'un événement réseau, etc.)</li>
+          <p>&rarr; synchroniser</p>
+        </div>
+        <div class="uncover">
+          <li>Communication et coopération entre processus locaux ou distants (ex: échanger des données, stocker des résultats)</li>
+          <p>&rarr; établir des canaux de communication</p>
+        </div>
+        <div class="uncover">
+          <li>Réduction du temps d'exécution en répartissant les calculs sur plusieurs processeurs/cœurs</li>
+          <p>&rarr; diviser et organiser le fonctionnement</p>
+        </div>
+      </ul>
+    </section>
+    <!--section-->
+    <!--  h1 Objectifs du cours-->
+    <!--  ul-->
+    <!--    li Rappels sur les processus et les <em>threads</em>-->
+    <!--    li.uncover Problèmes liés au parallélisme-->
+    <!--      ul-->
+    <!--        li Ressources critiques / limitées-->
+    <!--        li Synchronisation-->
+    <!--        li Ordonnancement-->
+    <!--        li etc.-->
+    <!--    li.uncover Communications / coopération entre processus locaux ou distants-->
+    <!--      ul-->
+    <!--        li Communication entre processus-->
+    <!--        li Communication entre <em>threads</em>-->
+    <!--        li Réalisation de services (client/serveur)-->
+    <!--  br-->
+    <!--  p.uncover Les implémentations seront faites en Java-->
+    <section>
+      <h1>Contenu du cours</h1>
+      <ul>
+        <li>Processus et tâches</li>
+        <li class="uncover">Utilisation concurrentielle des ressources
+          <ul>
+            <li>Problèmes liés à la concurrence</li>
+            <li>Ressources/sections critiques</li>
+            <li>Exclusion mutuelle</li>
+          </ul>
+        </li>
+        <li class="uncover">Outils
+          <ul>
+            <li>Verrous</li>
+            <li>Barrières</li>
+            <li>Sémaphores</li>
+          </ul>
+        </li>
+        <li class="uncover">Synchronisation des processus</li>
+        <li class="uncover">Communication entre processus distants
+          <ul>
+            <li>Boîtes aux lettres</li>
+            <li>Sockets</li>
+            <li>Modèle client/serveur</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+    <section>
+      <div class="side">
+        <h1>Concurrence</h1>
+        <ul>
+          <li>Intervalles d'exécution qui se chevauchent</li>
+          <li>Peut se faire avec un seul processeur</li>
+          <li>On peut simuler du parallélisme avec du <em>time slicing</em></li>
+        </ul><br><img src="cours01/concurrent.png"><br>
+        <div class="uncover">
+          <p>Ex :</p>
+          <ul>
+            <li>coroutines</li>
+            <li>interruptions et attente I/O</li>
+            <li>processus dans un système d'exploitation multi-tâches</li>
+          </ul>
+        </div>
+      </div>
+      <div class="side">
+        <h1>Parallélisme</h1>
+        <ul>
+          <li>Exécutions simultanées</li>
+          <li>Nécessite plusieurs processeurs (un par tâche parallèle)</li>
+        </ul><br><br><img src="cours01/parallel.png">
+        <div class="uncover" data-start="+0"><br>
+          <p>Ex :</p>
+          <ul>
+            <li>calculs parallèles sur réseau</li>
+            <li>processeur multi-cœurs</li>
+            <li>traitement d'images</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <div class="section-counter"></div>
+    <section class="section">
+      <h1>Rappels</h1>
+    </section>
+    <section>
+      <h1>Processus</h1>
+      <div class="side"><img src="cours01/stack-process.svg"></div>
+      <div class="side">
+        <p>Programme en cours d'exécution (un même programme peut être lancé plusieurs fois)</p><br>
+        <ul>
+          <li>Espace d'adressage propre (chaque processus a sa propre mémoire)</li>
+          <li>Deux processus peuvent être sur des machines différentes</li>
+          <li>Peut être interrompu et réactivé en sauvegardant son état</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1><em>Thread</em></h1>
+      <div class="side"><img src="cours01/stack-thread.svg"></div>
+      <div class="side">
+        <p>Processus légers : subdivisions d'un processus</p>
+        <ul>
+          <li>Partagent l'espace mémoire</li>
+          <li>Chaque <em>thread</em> a son segment de pile</li>
+          <li>Threads d'un même processus partagent leur code</li>
+          <li>Peut être interrompu et réactivé en sauvegardant son état</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Communication entre processus</h1>
+      <p>Processus ne partagent pas leurs variables</p>
+      <p>Plusieurs moyens pour communiquer (IPC) :</p>
+      <ul>
+        <li>signaux</li>
+        <li>tubes anonymes (<em>pipes</em>)</li>
+        <li>FIFO (tubes nommés)</li>
+        <li>Files de messages</li>
+        <li>Verrous</li>
+        <li>Sémaphores</li>
+        <li>Segments de mémoire partagée</li>
+        <li>Fichiers sur mémoire</li>
+        <li>Sockets</li>
+      </ul>
+    </section>
+    <section>
+      <h1>Cycle d'un processus</h1>
+      <div class="side"><img src="cours01/cycle.svg" style="width: 100%" alt="cycle d'un processus"></div>
+      <div class="side">
+        <p>Les processus ont 5 états possibles d'exécution :</p>
+        <ul>
+          <li><strong>Nouveau :</strong> en cours de création</li>
+          <li>
+            <strong>Prêt :</strong> toutes les ressources nécessaires sont disponibles mais pas actuellement exécuté par le CPU</li>
+          <li><strong>Exécution :</strong> en cours d'exécution par le CPU</li>
+          <li>
+            <strong>En attente :</strong> ne peut pas poursuivre son exécution (attente clavier, fichier, message d'un autre processus, etc.)</li>
+          <li><strong>Terminé :</strong> l'exécution est finie</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Exécution en Java</h1>
+      <div class="side">
+        <div class="uncover">
+          <pre><code class="java">public class Prog {
+  public static void main(String[] args){
+    ...
+  }
+}</code></pre>
+        </div>
+        <div class="uncover">
+          <pre><code class="bash">$ javac Prog.java
+$ ls
+Prog.class	Prog.java</code>
+            <div class="uncover"><code class="bash">$ java Prog &
+$ ps
+ PID TTY        TIME CMD
+4232 ttys0   0:00.03 -bash
+4295 ttys0   0:00.04 /usr/bin/java Prog
+</code></div></pre>
+        </div>
+      </div>
+      <div class="side">
+        <p>Les programmes en Java sont exécutés par une machine virtuelle (JVM)</p><br>
+        <ul>
+          <li class="skip uncover" data-start="1">Un programme est une classe (<code>.java</code>) avec une méthode statique <code>main</code></li>
+          <li class="skip uncover">Compilation produit un fichier en langage machine de la JVM (<code>.class</code>)</li>
+          <li class="uncover">À l'exécution : nouveau processus qui <em>exécute</em> la JVM qui <em>interprète</em> le code compilé</li>
+        </ul>
+      </div>
+    </section>
+    <div class="section-counter"></div>
+    <section class="section">
+      <h1>Processus légers<br>en Java</h1>
+    </section>
+    <section>
+      <h1>Processus légers en Java</h1>
+      <p>Gérés par la classe <code>Thread</code></p>
+      <p>Peuvent être créés</p>
+      <ul>
+        <li>en héritant de la classe <code>Thread</code></li>
+        <li>en implémentant l'interface <code>Runnable</code></li>
+      </ul>
+    </section>
+    <section>
+      <h1>Héritage de <em>Thread</em></h1>
+      <div class="side">
+        <pre><code class="java">public class Tache extends Thread {
+  ...
+
+  public void run() {
+    ...   // activité du Thread
+  }
+}</code></pre>
+        <div class="uncover">
+          <pre><code class="java">Tache t = new Tache(...);
+t.start();</code></pre>
+        </div>
+      </div>
+      <div class="side">
+        <ul>
+          <li>Classes qui héritent de <code>Thread</code> doivent surcharger la méthode <code>run()</code></li>
+          <li class="uncover" data-start="1">Les <em>threads</em> sont lancés avec la méthode <code>start()</code> (héritée de <code>Thread</code>)</li>
+          <div class="uncover">
+            <li>Lorsque le <em>thread</em> s'exécute, la JVM exécute la méthode <code>run()</code></li>
+            <li>Le <em>thread</em> se termine lorsque <code>run()</code> termine</li>
+          </div>
+        </ul><br>
+        <p class="uncover"><strong>Rmq :</strong> Après l'appel à <code>start()</code> le <em>thread</em> est <em>prêt</em> mais ne démarre pas nécessairement immédiatement</p>
+      </div>
+    </section>
+    <section>
+      <h1>Exemple</h1>
+      <pre><code class="java">public class Tache extends Thread {
+  private int id;
+
+  public Tache(int id) {
+    this.id = id;
+  }
+
+  public void run() {
+    for (int i=0; i<10; i++) {
+      System.out.println(id + ": " + i);
+    }
+  }
+
+  public static void main(String[] args) {
+    Tache t1 = new Tache(1);
+    Tache t2 = new Tache(2);
+    t1.start();
+    t2.start();
+  }
+}
+</code></pre>
+    </section>
+    <section>
+      <h1>Implémentation de <em>Runnable</em></h1>
+      <div class="side">
+        <pre><code class="java">public class Tache implements Runnable {
+  ...
+
+  public void run() {
+    ...   // activité du Thread
+  }
+}</code></pre>
+        <pre><code class="java uncover">Tache t = new Tache(...);
+Thread th = new Thread(t);
+th.start();</code></pre>
+      </div>
+      <div class="side">
+        <ul>
+          <li>L'interface <code>Runnable</code> requiert uniquement une méthode <code>void run()</code></li>
+          <p><strong>Rmq :</strong> Cette classe n'est pas un <code>Thread</code></p>
+          <li class="uncover" data-start="1">La classe <code>Thread</code> a un constructeur qui prend en argument un <code>Runnable</code></li>
+          <li class="uncover">On appelle la méthode <code>start()</code> du <em>thread</em> pour l'exécuter</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Exemple</h1>
+      <pre><code class="java">public class Tache implements Runnable {
+  private int id;
+
+  public Tache(int id) {
+    this.id = id;
+  }
+
+  public void run() {
+    for (int i=0; i<10; i++) {
+      System.out.println(id + ": " + i);
+    }
+  }
+
+  public static void main(String[] args) {
+    Tache t1 = new Tache(1);
+    Tache t2 = new Tache(2);
+    Thread th1 = new Thread(t1);
+    Thread th2 = new Thread(t2);
+    th1.start();
+    th2.start();
+  }
+}
+</code></pre>
+    </section>
+    <section>
+      <h1>Méthodes de la classe <em>Thread</em></h1>
+      <p>La classe <code>Thread</code> contient des méthodes pour contrôler les <em>threads</em></p><br>
+      <ul>
+        <li class="skip"><code class="java">static void sleep(long millis)</code>
+          <p>Bloque le <em>thread</em> pendant <em>millis</em> millisecondes</p>
+          <p><strong>Rmq :</strong> c'est une méthode <em>statique</em></p>
+        </li>
+        <li class="skip"><code class="java">boolean isAlive()</code>
+          <p>Renvoie <em>true</em> si le <em>thread</em> est encore en cours d'exécution</p>
+        </li>
+        <li><code class="java">Thread.State getState()</code>
+          <p>Renvoie l'état d'exécution du <em>thread</em> (<code>NEW</code>, <code>RUNNABLE</code>, <code>BLOCKED</code>, <code>WAITING</code>, <code>TIMED_WAITING</code> ou <code>TERMINATED</code>)</p>
+        </li>
+      </ul>
+    </section>
+    <section>
+      <h1>Méthodes de la classe <em>Thread</em></h1>
+      <ul>
+        <li class="skip"><code class="java">int getPriority()</code><br><code class="java">int setPriority(int newPriority)</code>
+          <p>Gère la priorité d'exécution du <em>thread</em></p>
+          <p>(<code>MIN_PRIORITY</code>, <code>MAX_PRIORITY</code> ou <code>NORM_PRIORITY</code>)</p>
+          <p><strong>Rmq :</strong> priorité haute &rarr; plus de chances d'être exécuté (mais pas de garantie)</p>
+        </li>
+        <li><code class="java">static void yield()</code>
+          <p>Le <em>thread</em> passe automatiquement de l'état <em>running</em> à <em>runnable</em> (laisse la main)</p>
+        </li>
+      </ul>
+    </section>
+    <section>
+      <h1><em>Threads</em> et programme principal</h1>
+      <div class="side">
+        <pre class="only" data-step="0"><code class="c">int main() {
+  pthread_t th;
+  pthread_create(&th, NULL, f, NULL);
+  ...
+  pthread_join(th, NULL); // attend
+  exit(0);
+}</code></pre>
+        <div class="only">
+          <pre><code class="java">public class Tache extends Thread {
+  public void run() {
+    for (int i = 0; i < 5; i++) {
+      System.out.printf("%d ", i);
+    }
+  }
+
+  public static void main(String[] args){
+    Tache t1 = new Tache();
+    Tache t2 = new Tache();
+    System.out.println("Début");
+    t1.start(); t2.start();
+    System.out.println("Fin");
+  }
+}</code></pre>
+          <pre><code class="bash">$ java Tache
+Début
+Fin
+0 1 2 3 4 0 1 2 3 4</code></pre>
+        </div>
+        <div class="only">
+          <pre><code class="java">public class Tache extends Thread {
+  public void run() {
+    for (int i = 0; i &lt; 5; i++) {
+      System.out.printf("%d ", i);
+    }
+  }
+
+  public static void main(String[] args) {
+    Tache t1 = new Tache();
+    Tache t2 = new Tache();
+    System.out.println("Début");
+    t1.start(); t2.start();
+    <span class="highlight">t1.join(); t2.join();</span>
+    System.out.println("\nFin");
+  }
+}</code></pre>
+          <pre><code class="bash">$ java Tache
+Début
+0 1 2 3 4 0 1 2 3 4
+Fin</code></pre>
+        </div>
+      </div>
+      <div class="side">
+        <div class="only" data-step="0">
+          <p>En C quand le programme principal (<code>main</code>) termine, le processus se termine</p><br>
+          <p>&rarr; Pour attendre la fin d'un <em>thread</em> il faut utiliser la fonction <code>join</code></p>
+        </div>
+        <div class="only" data-start="1">
+          <p>En Java les <em>threads</em> ne sont pas interrompus quand le programme principal termine</p><br>
+          <p>&rarr; Le programme termine quand tous les <em>threads</em> lancés sont terminés</p><br>
+          <div class="uncover">
+            <p>On peut attendre la fin d'exécution d'un <em>thread</em> avec <code>join</code></p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h1>Partage de variables</h1>
+      <p>Les <em>threads</em> d'un même processus partagent la mémoire</p>
+      <ul>
+        <li>accèdent aux mêmes variables globales</li>
+        <li>ont leur propre pile (variables locales)</li>
+        <li>les classes ne sont chargées qu'une fois (communes pour tous les <em>threads</em>) mais les instances peuvent être propres à chaque <em>thread</em></li>
+      </ul>
+    </section>
+    <section>
+      <h1>Exemple</h1>
+      <div class="side">
+        <pre><code class="java">public class Tache extends Thread {
+  private static int compteur = 0;
+
+  public void run() {
+    for (int i = 0; i < 100000; i++) {
+      compteur++;
+    }
+  }
+
+  public static void main(String[] args) {
+    Tache t1 = new Tache();
+    Tache t2 = new Tache();
+    t1.start(); t2.start();
+    try {
+      t1.join(); t2.join();
+    } catch (InterruptedException e) {
+    }
+    System.out.println(compteur);
+  }
+}</code></pre>
+      </div>
+      <div class="side">
+        <div class="only">
+          <pre><code class="bash">$ javac Tache.java
+$ java Tache
+122513
+$ java Tache
+102498</code></pre>
+          <p>&rarr; Le résultat est bien en-dessous du résultat attendu (200000)</p>
+        </div>
+        <div class="only" data-start="2">
+          <ul>
+            <div class="uncover" data-start="+0">
+              <li>Les opérations sur <code>compteur</code> ne sont pas <em>atomiques</em></li>
+              <pre class="only" data-step="+0"><code class="java">compteur++;</code></pre>
+              <pre class="only" data-start="+1"><code>1. mov &cpt reg   // lire compteur
+2. inc reg        // incrémenter registre
+3. mov reg &cpt   // écrire compteur</code></pre>
+            </div>
+            <div class="uncover">
+              <li>Les <em>threads</em> sont interrompus par l'ordonnanceur en cours d'exécution, puis réactivés</li>
+            </div>
+            <div class="uncover">
+              <li>Si un <em>thread</em> est interrompu <strong>entre la lecture et l'écriture</strong>, les modifications de l'autre <em>thread</em> sont perdues</li>
+            </div>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', (event) => {
+        hljs.configure({
+          languages: [],  // disable automatic language detection
+        });
+        document.querySelectorAll('code').forEach((block) => {
+          hljs.highlightBlock(block);
+        });
+      });
+    </script>
+    <script src="https://vpoupet.github.io/myriad/slides/slides.js"></script>
+    <script src="https://vpoupet.github.io/myriad/slides/themes/myriad/myriad.js"></script>
+  </body>
+</html>
