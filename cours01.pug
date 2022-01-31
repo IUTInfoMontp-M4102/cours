@@ -2,7 +2,7 @@ extends coursXX.pug
 
 append preamble
   -
-    title = "Cours n°1";
+    title = "Cours n°1<br><em>Threads</em>";
     date = "2022-01-25"
 
 block document
@@ -20,24 +20,6 @@ block document
       .uncover
         li Réduction du temps d'exécution en répartissant les calculs sur plusieurs processeurs/cœurs
         p &rarr; diviser et organiser le fonctionnement
-
-  //section
-  //  h1 Objectifs du cours
-  //  ul
-  //    li Rappels sur les processus et les <em>threads</em>
-  //    li.uncover Problèmes liés au parallélisme
-  //      ul
-  //        li Ressources critiques / limitées
-  //        li Synchronisation
-  //        li Ordonnancement
-  //        li etc.
-  //    li.uncover Communications / coopération entre processus locaux ou distants
-  //      ul
-  //        li Communication entre processus
-  //        li Communication entre <em>threads</em>
-  //        li Réalisation de services (client/serveur)
-  //  br
-  //  p.uncover Les implémentations seront faites en Java
 
   section
     h1 Contenu du cours
@@ -424,3 +406,287 @@ block document
             li Les <em>threads</em> sont interrompus par l'ordonnanceur en cours d'exécution, puis réactivés
           .uncover
             li Si un <em>thread</em> est interrompu <strong>entre la lecture et l'écriture</strong>, les modifications de l'autre <em>thread</em> sont perdues
+
+  section
+    h1 Ordonnancement
+    p Il existe un <em>ordonnanceur</em> (<em>scheduler</em>) qui gère les processus et les <em>threads</em>
+    br
+    ul
+      li file d'attente contenant les tâches qui peuvent s'exécuter (<em>runnable</em>)
+      ul
+        li initialisées
+        li interrompues
+        li débloquées
+      li différentes politiques de gestion de file
+      ul
+        li tourniquet (<em>fair play</em>)
+        li priorités
+        li temps d'attente
+        li etc.
+
+  section
+    h1 Ordonnancement
+    ul
+      li Le <em>thread</em> Java à exécuter est choisi parmi les <em>threads</em> qui sont éligibles
+      li L'ordonnanceur Java est
+      ul
+        li <em>préemptif</em> (l’ordonnanceur peut interrompre une tâche pour donner les ressources à une autre tâche
+        li basé sur une priorité (essaye de donner les ressources à une tâche prioritaire)
+
+    br
+    ul
+      li L'ordonnanceur dépend de l'implémentation de JVM
+      ul
+        li <em>green thread</em> : c’est la JVM qui implémente l’ordonnancement
+        li <em>thread natif</em> :c’est le système d’exploitation hôte qui effectue l’ordonnancement
+
+  section
+    h1 <em>Thread Pool</em>
+    p Le système gère les tâches selon sa propre politique et selon l’état des tâches
+    br
+    ul
+      li Un nombre important de threads peut encombrer la JVM
+      li On peut avoir besoin des gestionnaires différents
+      li Créer des ensembles de threads, gérés par un gestionnaire à part : <em>thread pools</em>
+
+  section
+    h1 Gestionnaires de tâches
+    p Il est possible de créer des gestionnaires de tâches qui gèrent un ensemble de tâches
+    ul
+      li La politique et la gestion des <em>threads</em> sont paramétrables
+      li Les comportements sont définis par les interfaces
+    br
+
+    .center-v(style={height: "14em"})
+      pre.only(data-step=0)
+        code.java.
+          import java.util.concurrent.Executor
+          import java.util.concurrent.ExecutorService
+
+          Interface Executor                    // pour Runnable
+          Interface ExecutorService             // pour Runnable et Callable
+          Interface ScheduledExecutorService    // pour exécution périodique
+      img.only(src="cours01/executor.png")
+
+  section
+    h1 Interface <em>Executor</em>
+    .side
+      p Un <code>Executor</code> gère une file d’attente bloquante de tâches à effectuer
+      br
+      ul
+        li Idée : dissocier la soumission et l'exécution des tâches
+        li Une seule méthode dans l’interface : <code class="java">void execute(Runnable command)</code>
+        li La tâche peut être exécutée dans un <em>thread</em> dédié ou dans le <em>thread</em> courant
+      br
+      p &rarr;
+        a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executor.html") Documentation
+
+    .side
+      p Ex 1 : exécution dans le <em>thread</em> principal
+      pre
+        code.java.
+          class MonExecutor1 implements Executor {
+            public void execute(Runnable cmd) {
+              cmd.run();
+            }
+          }
+      hr
+      p Ex 2 : exécution dans un <em>thread</em> séparé
+      pre
+        code.java.
+          class MonExecutor2 implements Executor {
+            public void execute(Runnable cmd) {
+              new Thread(cmd).start();
+            }
+          }
+
+  section
+    h1 Interface <em>ExecutorService</em>
+    .only(data-step=0)
+      p Ajoute des fonctionnalités
+      ul
+        li Durée de vie du gestionnaire
+        ul
+          li
+            code.java boolean isTerminated()
+          li
+            code.java boolean awaitTermination(long timeout, TimeUnit unit)
+          li
+            code.java void shutdown()
+          li
+            code.java List&lt;Runnable> shutdownNow()
+        li Les tâches peuvent renvoyer un résultat (<code>Callable</code> au lieu de <code>Runnable</code>)
+        ul
+          li
+            code.java Future&lt;T> submit(Callable&lt;T> task)
+      br
+      p &rarr;
+        a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorService.html") Documentation
+
+
+    .only
+      p Implémentations
+      ul
+        li
+          code.java public abstract class AbstractExecutorService
+        li
+          code.java public class ThreadPoolExecutor extends AbstractExecutorService
+          p Limite sur le nombre de <em>threads</em>
+          .center
+            img(style={width: "50%"} src="cours01/thread_pool.png")
+
+  section
+    h1 La fabrique <em>Executors</em>
+    p Sert à instancier des <code>Executor</code>
+    pre
+      code.java.
+        import java.util.concurrent.Executors
+
+        static ExecutorService newSingleThreadExecutor()
+        static ExecutorService newFixedThreadPool(int nThreads)
+        static ScheduledExecutorService newScheduledThreadPool(int corePoolSize, ThreadFactory threadFactory)
+    br
+    p &rarr;
+      a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executors.html") Documentation
+
+  section
+    h1 Exemple
+    .only(data-step=0)
+      pre
+        code.java
+          include cours01/MaTache.java
+    .only
+      pre
+        code.java
+          include cours01/MonExecutor.java
+    .only
+      pre
+        code.
+          $ java MonExecutor
+          Tache 1  0
+          Tache 1  1
+          Tache 1  2
+          Tache 1  3
+          Tache 1  4
+          Tache 2   0
+          Tache 2   1
+          Tache 2   2
+          Tache 2   3
+          Tache 2   4
+
+
+      p &rarr; Les tâches sont appelées séquentiellement dans un nouveau <em>thread</em>
+    .only
+      pre
+        code.java
+          include cours01/MonExecutor2.java
+    .only
+      pre
+        code.
+          $ java MonExecutor
+          Tache 1  0
+          Tache 2   0
+          Tache 1  1
+          Tache 2   1
+          Tache 2   2
+          Tache 1  2
+          Tache 2   3
+          Tache 1  3
+          Tache 1  4
+          Tache 2   4
+          Tache 3    0
+          Tache 3    1
+          Tache 3    2
+          Tache 3    3
+          Tache 3    4
+      p &rarr; Les tâches 1 et 2 sont exécutées en même temps. La tâche 3 s'exécute lorsqu'une place est libre.
+
+  section
+    h1 L'interface <em>Callable</em>
+    .side
+      p Interface <code>Runnable</code> :
+      br
+      ul
+        li dans <code>java.lang</code>
+        li <code class="java">void run()</code> ne renvoie aucune valeur
+        li Ne peut pas lever d'exceptions
+      br
+      p &rarr;
+        a(href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runnable.html") Documentation
+
+    .side
+      p Interface <code>Callable&lt;V></code>
+      ul
+        li dans <code>java.util.concurrent</code>
+        li
+          code.java public V call() throws Exception
+        li Renvoie un résultat de type <code>V</code> (générique)
+      br
+      p &rarr;
+        a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html") Documentation
+
+  section
+    h1 Exemple
+    pre
+      code.java
+        include cours01/MonCallable.java
+
+  section
+    h1 Gestionnaires et <em>Callable</em>
+    p On peut utiliser un <code>ExecutorServices</code> pour soumettre des <code>Callable</code> :
+    ul
+      li
+        code.java Future&lt;T> submit (Callable&lt;T> task)
+
+    pre
+      code.java.
+        public class Main {
+          public static void main(String[] args) {
+            ExecutorService ex = Executors.newSingleThreadExecutor();
+            Future<Integer> res = ex.submit(new MonCallable());
+
+            ...
+
+            ex.shutdown();
+          }
+        }
+
+  section
+    h1 Le type <em>Future&lt;V></em>
+    p L'interface générique <code>Future&lt;V></code> représente un résultat de type <code>V</code> qui n'est pas encore calculé
+    ul
+      li
+        code.java boolean	cancel (boolean mayInterruptIfRunning)
+        p Annule la tâche en cours
+      li
+        code.java V	get()
+        p Bloque jusqu'à complétion de la tâche et renvoie le résultat
+      li
+        code.java V	get (long timeout, TimeUnit unit)
+        p Limite sur le temps d'attente
+      li
+        code.java boolean	isCancelled()
+        p Indique si la tâche a été annulée
+      li
+        code.java boolean	isDone()
+        p Indique si le résultat est disponible
+
+
+    br
+    p &rarr;
+      a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Future.html") Documentation
+
+  section
+    h1 Exemple
+    .only(data-step=0)
+      pre
+        code.java
+          include cours01/MonCallableMain.java
+    .only
+      pre
+        code.
+          $ java MonCallableMain
+          Attente du résultat...
+          Attente du résultat...
+          Attente du résultat...
+          Résultat : 42
