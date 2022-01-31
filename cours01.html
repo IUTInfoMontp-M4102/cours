@@ -2,7 +2,7 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8">
-    <title>Cours n°1 <em>Threads</em></title>
+    <title>Cours n°1 - Threads</title>
     <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/slides.css">
     <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/themes/myriad/myriad.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/monokai.min.css">
@@ -468,13 +468,15 @@ $ java Tache
           <li>interrompues</li>
           <li>débloquées</li>
         </ul>
-        <li>différentes politiques de gestion de file</li>
-        <ul>
-          <li>tourniquet (<em>fair play</em>)</li>
-          <li>priorités</li>
-          <li>temps d'attente</li>
-          <li>etc.</li>
-        </ul>
+        <div class="uncover">
+          <li>différentes politiques de gestion de file</li>
+          <ul>
+            <li>tourniquet (<em>fair play</em>)</li>
+            <li>priorités</li>
+            <li>temps d'attente</li>
+            <li>etc.</li>
+          </ul>
+        </div>
       </ul>
     </section>
     <section>
@@ -526,31 +528,37 @@ Interface ScheduledExecutorService    // pour exécution périodique</code></pre
         <p>Un <code>Executor</code> gère une file d’attente bloquante de tâches à effectuer</p><br>
         <ul>
           <li>Idée : dissocier la soumission et l'exécution des tâches</li>
-          <li>Une seule méthode dans l’interface : <code class="java">void execute(Runnable command)</code></li>
+          <li>Une seule méthode dans l’interface :
+            <p><code class="java">void execute(Runnable command)</code></p>
+          </li>
           <li>La tâche peut être exécutée dans un <em>thread</em> dédié ou dans le <em>thread</em> courant</li>
         </ul><br>
         <p>&rarr;<a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executor.html">Documentation</a></p>
       </div>
       <div class="side">
-        <p>Ex 1 : exécution dans le <em>thread</em> principal</p>
-        <pre><code class="java">class MonExecutor1 implements Executor {
+        <div class="uncover">
+          <p>Ex 1 : exécution dans le <em>thread</em> principal</p>
+          <pre><code class="java">class MonExecutor1 implements Executor {
   public void execute(Runnable cmd) {
     cmd.run();
   }
 }</code></pre>
-        <hr>
-        <p>Ex 2 : exécution dans un <em>thread</em> séparé</p>
-        <pre><code class="java">class MonExecutor2 implements Executor {
+        </div>
+        <div class="uncover">
+          <hr>
+          <p>Ex 2 : exécution dans un <em>thread</em> séparé</p>
+          <pre><code class="java">class MonExecutor2 implements Executor {
   public void execute(Runnable cmd) {
     new Thread(cmd).start();
   }
 }
 </code></pre>
+        </div>
       </div>
     </section>
     <section>
       <h1>Interface <em>ExecutorService</em></h1>
-      <div class="only" data-step="0">
+      <div class="only" data-start="0" data-end="1">
         <p>Ajoute des fonctionnalités</p>
         <ul>
           <li>Durée de vie du gestionnaire</li>
@@ -559,10 +567,12 @@ Interface ScheduledExecutorService    // pour exécution périodique</code></pre
             <li><code class="java">boolean awaitTermination(long timeout, TimeUnit unit)</code></li>
             <li><code class="java">void shutdown()</code></li>
             <li><code class="java">List&lt;Runnable> shutdownNow()</code></li>
-          </ul>
-          <li>Les tâches peuvent renvoyer un résultat (<code>Callable</code> au lieu de <code>Runnable</code>)</li>
-          <ul>
-            <li><code class="java">Future&lt;T> submit(Callable&lt;T> task)</code></li>
+            <div class="uncover">
+              <li>Les tâches peuvent renvoyer un résultat (<code>Callable</code> au lieu de <code>Runnable</code>)</li>
+              <ul>
+                <li><code class="java">Future&lt;T> submit(Callable&lt;T> task)</code></li>
+              </ul>
+            </div>
           </ul>
         </ul><br>
         <p>&rarr;<a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorService.html">Documentation</a></p>
@@ -692,13 +702,15 @@ Tache 3    4</code></pre>
         <p>&rarr;<a href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runnable.html">Documentation</a></p>
       </div>
       <div class="side">
-        <p>Interface <code>Callable&lt;V></code></p>
-        <ul>
-          <li>dans <code>java.util.concurrent</code></li>
-          <li><code class="java">public V call() throws Exception</code></li>
-          <li>Renvoie un résultat de type <code>V</code> (générique)</li>
-        </ul><br>
-        <p>&rarr;<a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html">Documentation</a></p>
+        <div class="uncover">
+          <p>Interface <code>Callable&lt;V></code></p>
+          <ul>
+            <li>dans <code>java.util.concurrent</code></li>
+            <li><code class="java">public V call() throws Exception</code></li>
+            <li>Renvoie un résultat de type <code>V</code> (générique)</li>
+          </ul><br>
+          <p>&rarr;<a href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html">Documentation</a></p>
+        </div>
       </div>
     </section>
     <section>

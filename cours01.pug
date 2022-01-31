@@ -3,7 +3,8 @@ extends coursXX.pug
 append preamble
   -
     title = "Cours n°1<br><em>Threads</em>";
-    date = "2022-01-25"
+    page_title = "Cours n°1 - Threads";
+    date = "2022-01-25";
 
 block document
   section
@@ -417,12 +418,13 @@ block document
         li initialisées
         li interrompues
         li débloquées
-      li différentes politiques de gestion de file
-      ul
-        li tourniquet (<em>fair play</em>)
-        li priorités
-        li temps d'attente
-        li etc.
+      .uncover
+        li différentes politiques de gestion de file
+        ul
+          li tourniquet (<em>fair play</em>)
+          li priorités
+          li temps d'attente
+          li etc.
 
   section
     h1 Ordonnancement
@@ -475,34 +477,38 @@ block document
       br
       ul
         li Idée : dissocier la soumission et l'exécution des tâches
-        li Une seule méthode dans l’interface : <code class="java">void execute(Runnable command)</code>
+        li Une seule méthode dans l’interface :
+          p
+            code.java void execute(Runnable command)
         li La tâche peut être exécutée dans un <em>thread</em> dédié ou dans le <em>thread</em> courant
       br
       p &rarr;
         a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Executor.html") Documentation
 
     .side
-      p Ex 1 : exécution dans le <em>thread</em> principal
-      pre
-        code.java.
-          class MonExecutor1 implements Executor {
-            public void execute(Runnable cmd) {
-              cmd.run();
+      .uncover
+        p Ex 1 : exécution dans le <em>thread</em> principal
+        pre
+          code.java.
+            class MonExecutor1 implements Executor {
+              public void execute(Runnable cmd) {
+                cmd.run();
+              }
             }
-          }
-      hr
-      p Ex 2 : exécution dans un <em>thread</em> séparé
-      pre
-        code.java.
-          class MonExecutor2 implements Executor {
-            public void execute(Runnable cmd) {
-              new Thread(cmd).start();
+      .uncover
+        hr
+        p Ex 2 : exécution dans un <em>thread</em> séparé
+        pre
+          code.java.
+            class MonExecutor2 implements Executor {
+              public void execute(Runnable cmd) {
+                new Thread(cmd).start();
+              }
             }
-          }
 
   section
     h1 Interface <em>ExecutorService</em>
-    .only(data-step=0)
+    .only(data-start=0 data-end=1)
       p Ajoute des fonctionnalités
       ul
         li Durée de vie du gestionnaire
@@ -515,10 +521,11 @@ block document
             code.java void shutdown()
           li
             code.java List&lt;Runnable> shutdownNow()
-        li Les tâches peuvent renvoyer un résultat (<code>Callable</code> au lieu de <code>Runnable</code>)
-        ul
-          li
-            code.java Future&lt;T> submit(Callable&lt;T> task)
+          .uncover
+            li Les tâches peuvent renvoyer un résultat (<code>Callable</code> au lieu de <code>Runnable</code>)
+            ul
+              li
+                code.java Future&lt;T> submit(Callable&lt;T> task)
       br
       p &rarr;
         a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/ExecutorService.html") Documentation
@@ -615,15 +622,16 @@ block document
         a(href="https://docs.oracle.com/javase/10/docs/api/java/lang/Runnable.html") Documentation
 
     .side
-      p Interface <code>Callable&lt;V></code>
-      ul
-        li dans <code>java.util.concurrent</code>
-        li
-          code.java public V call() throws Exception
-        li Renvoie un résultat de type <code>V</code> (générique)
-      br
-      p &rarr;
-        a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html") Documentation
+      .uncover
+        p Interface <code>Callable&lt;V></code>
+        ul
+          li dans <code>java.util.concurrent</code>
+          li
+            code.java public V call() throws Exception
+          li Renvoie un résultat de type <code>V</code> (générique)
+        br
+        p &rarr;
+          a(href="https://docs.oracle.com/javase/10/docs/api/java/util/concurrent/Callable.html") Documentation
 
   section
     h1 Exemple
