@@ -1,0 +1,133 @@
+extends coursXX.pug
+
+append preamble
+    -
+      title = "Cours n°2<br>Accès Concurrents";
+      page_title = "Cours n°2 - Accès Concurrents";
+      date = "2022-02-01";
+
+block document
+  section
+    h1 Concurrence
+    .side
+      p Processus accèdent à des ressources partagées :
+      br
+      ul
+        li Processeur
+        li Fichiers
+        li Mémoire
+        li Base de données
+        li Service réseau
+        li etc.
+
+    .side
+      .uncover
+        p Il faut définir des mécanismes pour :
+        br
+        ul
+          li Ordonnancer les accès aux ressources
+          li Assurer l'unicité des accès à certaines ressources
+          li Synchroniser les processus
+          li Assurer la communication entre processus
+          li etc.
+
+  section
+    h1 Vocabulaire
+    .only(data-start=0 data-end=1)
+      .box
+        .box-title Section critique
+        .box-content Bloc d'instructions qui ne doit pas être exécuté par plusieurs tâches de manière concurrente.
+      .center
+        img(style={width: "40%"} src="cours02/section_critique.svg")
+        .footnote Image: <a href="https://tilics.dmi.unibas.ch/mutex">Things I learned in Computer Science</a>
+      br
+      .uncover(data-start=1)
+        p La section critique d’un programme doit être une opération indivisible, <em>atomique</em> vue de l’extérieur
+    .only
+      .box
+        .box-title Exclusion mutuelle
+        .box-content Méthode qui assure que si une tâche utilise une certaine ressource, les autres tâches ne peuvent pas y accéder.
+
+      br
+      p L’ exclusion mutuelle empêche que deux trains (<em>threads</em>) se retrouvent simultanément sur la voie unique (dans leurs sections critiques)
+
+  section
+    h1 Dîner des philosophes
+    .side
+      .center
+        img(style={width: "70%"} src="cours02/philosophes.png")
+      br
+      p &rarr; <a href="https://fr.wikipedia.org/wiki/Dîner_des_philosophes">Wikipédia</a>
+    .side
+      p 5 philosophes (tâches)
+      ul
+        li réfléchit pendant un temps indéterminé
+        li peut avoir faim (prend des fourchettes)
+        li mange s'il a deux fourchettes
+
+      p &rarr; Risque d'interbloquage
+      br
+      .uncover
+        p Plusieurs solutions possibles :
+        ul
+          li Ordonnanceur extérieur
+          li Négotiations entre philosophes
+          li Temps d'attente aléatoire sans garder les fourchettes
+
+  section
+    h1 Perte de mise à jour
+    .side
+      p <em>X</em> est une variable commune de <em>T1</em> et <em>T2</em>
+      .center
+        img(style={width: "80%"} src="cours02/perte_mise_a_jour.png")
+
+    .side
+      ul
+        li <em>T<sub>1</sub></em> lit une valeur <em>X</em>
+        li <em>X</em> est modifiée par <em>T<sub>2</sub></em>
+        li <em>T<sub>1</sub></em> fait une mise à jour de <em>X</em> à partir d'une valeur périmée
+        li La modification de <em>T<sub>2</sub></em> est perdue
+
+  section
+    h1 Lecture non reproductible
+    .side
+      p <em>X</em> est une variable commune de <em>T<sub>1</sub></em> et <em>T<sub>2</sub></em>
+      .center
+        img(style={width: "80%"} src="cours02/lecture_reproductible.png")
+
+    .side
+      ul
+        li La tâche <em>T<sub>1</sub></em> lit deux fois une variable et obtient deux valeurs différentes
+        li La valeur a été modifiée par <em>T<sub>2</sub></em> entre temps
+
+  section
+    h1 Incohérence de mises à jour
+    .side
+      p <em>A</em> et <em>B</em> sont communes à <em>T<sub>1</sub></em> et <em>T<sub>2</sub></em>
+      .center
+        img(style={width: "80%"} src="cours02/incoherence.png")
+    .side
+      ul
+        li <em>A</em> et <em>B</em> sont liées par une contrainte d'intégrité (<em>A</em> = <em>B</em>)
+        li Mises à jour par deux tâches différentes
+        li Violation de la contrainte initiale
+
+  section
+    h1 Verrou
+    p Une première solution : utiliser un <em>verrou</em> (<em>lock</em> ou <em>mutex</em>) sur la section critique
+    .box
+      .box-title Verrou
+      .box-content Un verrou est un objet qui ne peut être pris que par une seule tâche à la fois
+
+    pre.uncover
+      code.
+        prendre le verrou
+          x &larr; X
+          x += 1
+          X &larr; x
+        libérer le verrou
+    .uncover
+      p &rarr; Le verrou sur une <em>section critique</em> réalise une <em>exclusion mutuelle</em>
+      p Cette section indivisible ne peut être exécutée que par une seule tâche à la fois
+
+        

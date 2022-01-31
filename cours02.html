@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <title>Cours n°2 - Accès Concurrents</title>
+    <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/slides.css">
+    <link rel="stylesheet" href="https://vpoupet.github.io/myriad/slides/themes/myriad/myriad.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/monokai.min.css">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <section class="title">
+      <h1>Cours n°2<br>Accès Concurrents</h1>
+      <div class="context">M4102 - Programmation répartie</div>
+      <div class="author">Victor Poupet (adapté du cours de M. Molnar)</div>
+      <time>2022-02-01</time>
+    </section>
+    <section>
+      <h1>Concurrence</h1>
+      <div class="side">
+        <p>Processus accèdent à des ressources partagées :</p><br>
+        <ul>
+          <li>Processeur</li>
+          <li>Fichiers</li>
+          <li>Mémoire</li>
+          <li>Base de données</li>
+          <li>Service réseau</li>
+          <li>etc.</li>
+        </ul>
+      </div>
+      <div class="side">
+        <div class="uncover">
+          <p>Il faut définir des mécanismes pour :</p><br>
+          <ul>
+            <li>Ordonnancer les accès aux ressources</li>
+            <li>Assurer l'unicité des accès à certaines ressources</li>
+            <li>Synchroniser les processus</li>
+            <li>Assurer la communication entre processus</li>
+            <li>etc.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h1>Vocabulaire</h1>
+      <div class="only" data-start="0" data-end="1">
+        <div class="box">
+          <div class="box-title">Section critique</div>
+          <div class="box-content">Bloc d'instructions qui ne doit pas être exécuté par plusieurs tâches de manière concurrente.</div>
+        </div>
+        <div class="center"><img style="width:40%;" src="cours02/section_critique.svg">
+          <div class="footnote">Image: <a href="https://tilics.dmi.unibas.ch/mutex">Things I learned in Computer Science</a></div>
+        </div><br>
+        <div class="uncover" data-start="1">
+          <p>La section critique d’un programme doit être une opération indivisible, <em>atomique</em> vue de l’extérieur</p>
+        </div>
+      </div>
+      <div class="only">
+        <div class="box">
+          <div class="box-title">Exclusion mutuelle</div>
+          <div class="box-content">Méthode qui assure que si une tâche utilise une certaine ressource, les autres tâches ne peuvent pas y accéder.</div>
+        </div><br>
+        <p>L’ exclusion mutuelle empêche que deux trains (<em>threads</em>) se retrouvent simultanément sur la voie unique (dans leurs sections critiques)</p>
+      </div>
+    </section>
+    <section>
+      <h1>Dîner des philosophes</h1>
+      <div class="side">
+        <div class="center"><img style="width:70%;" src="cours02/philosophes.png"></div><br>
+        <p>&rarr; <a href="https://fr.wikipedia.org/wiki/Dîner_des_philosophes">Wikipédia</a></p>
+      </div>
+      <div class="side">
+        <p>5 philosophes (tâches)</p>
+        <ul>
+          <li>réfléchit pendant un temps indéterminé</li>
+          <li>peut avoir faim (prend des fourchettes)</li>
+          <li>mange s'il a deux fourchettes</li>
+        </ul>
+        <p>&rarr; Risque d'interbloquage</p><br>
+        <div class="uncover">
+          <p>Plusieurs solutions possibles :</p>
+          <ul>
+            <li>Ordonnanceur extérieur</li>
+            <li>Négotiations entre philosophes</li>
+            <li>Temps d'attente aléatoire sans garder les fourchettes</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h1>Perte de mise à jour</h1>
+      <div class="side">
+        <p><em>X</em> est une variable commune de <em>T1</em> et <em>T2</em></p>
+        <div class="center"><img style="width:80%;" src="cours02/perte_mise_a_jour.png"></div>
+      </div>
+      <div class="side">
+        <ul>
+          <li><em>T<sub>1</sub></em> lit une valeur <em>X</em></li>
+          <li><em>X</em> est modifiée par <em>T<sub>2</sub></em></li>
+          <li><em>T<sub>1</sub></em> fait une mise à jour de <em>X</em> à partir d'une valeur périmée</li>
+          <li>La modification de <em>T<sub>2</sub></em> est perdue</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Lecture non reproductible</h1>
+      <div class="side">
+        <p><em>X</em> est une variable commune de <em>T<sub>1</sub></em> et <em>T<sub>2</sub></em></p>
+        <div class="center"><img style="width:80%;" src="cours02/lecture_reproductible.png"></div>
+      </div>
+      <div class="side">
+        <ul>
+          <li>La tâche <em>T<sub>1</sub></em> lit deux fois une variable et obtient deux valeurs différentes</li>
+          <li>La valeur a été modifiée par <em>T<sub>2</sub></em> entre temps</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Incohérence de mises à jour</h1>
+      <div class="side">
+        <p><em>A</em> et <em>B</em> sont communes à <em>T<sub>1</sub></em> et <em>T<sub>2</sub></em></p>
+        <div class="center"><img style="width:80%;" src="cours02/incoherence.png"></div>
+      </div>
+      <div class="side">
+        <ul>
+          <li><em>A</em> et <em>B</em> sont liées par une contrainte d'intégrité (<em>A</em> = <em>B</em>)</li>
+          <li>Mises à jour par deux tâches différentes</li>
+          <li>Violation de la contrainte initiale</li>
+        </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Verrou</h1>
+      <p>Une première solution : utiliser un <em>verrou</em> (<em>lock</em> ou <em>mutex</em>) sur la section critique</p>
+      <div class="box">
+        <div class="box-title">Verrou</div>
+        <div class="box-content">Un verrou est un objet qui ne peut être pris que par une seule tâche à la fois</div>
+      </div>
+      <pre class="uncover"><code>prendre le verrou
+  x &larr; X
+  x += 1
+  X &larr; x
+libérer le verrou</code></pre>
+      <div class="uncover">
+        <p>&rarr; Le verrou sur une <em>section critique</em> réalise une <em>exclusion mutuelle</em></p>
+        <p>Cette section indivisible ne peut être exécutée que par une seule tâche à la fois</p>
+      </div>
+    </section>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', (event) => {
+        hljs.configure({
+          languages: [],  // disable automatic language detection
+        });
+        document.querySelectorAll('code').forEach((block) => {
+          hljs.highlightBlock(block);
+        });
+      });
+    </script>
+    <script src="https://vpoupet.github.io/myriad/slides/slides.js"></script>
+    <script src="https://vpoupet.github.io/myriad/slides/themes/myriad/myriad.js"></script>
+  </body>
+</html>
