@@ -54,6 +54,7 @@ block document
   section
     h1 Dîner des philosophes
     .side
+      p Auteur : Edsger Dijkstra
       .center
         img(style={width: "70%"} src="cours02/philosophes.png")
       br
@@ -113,12 +114,33 @@ block document
         li Violation de la contrainte initiale
 
   section
+    h1 Résumé
+    .side
+      p L’<strong>exclusion mutuelle</strong> est une méthode qui permet à un processus ou <em>thread</em> d’utiliser une ressource
+        |  critique et d’exclure les autres processus de cette activité
+      br
+      .uncover
+        p Une <strong>section critique</strong> est une suite d'instructions qui accède à une ressource partagée
+        p &rarr; Pour éviter les problèmes, il faut empêcher que deux tâches se retrouvent dans une
+          |  section critique en même temps
+    .side
+      .uncover
+        p Critères requis pour une solution :
+        ul
+          li solution uniforme
+          li temps fini dans la section critique
+          li une seule tâche en section critique
+          li éviter les interblocages (<em>deadlocks</em>) à l’entrée de la section critique
+          li tâche bloquée en dehors de la section critique ne doit pas bloquer
+          li tâche interrompue en section critique ne doit pas bloquer
+
+  section
     h1 Verrou
     p Une première solution : utiliser un <em>verrou</em> (<em>lock</em> ou <em>mutex</em>) sur la section critique
     .box
       .box-title Verrou
       .box-content Un verrou est un objet qui ne peut être pris que par une seule tâche à la fois
-
+    p &rarr; Si un verrou est pris, il faut attendre qu'il se libère pour l'obtenir
     pre.uncover
       code.
         prendre le verrou
@@ -130,4 +152,342 @@ block document
       p &rarr; Le verrou sur une <em>section critique</em> réalise une <em>exclusion mutuelle</em>
       p Cette section indivisible ne peut être exécutée que par une seule tâche à la fois
 
-        
+  section
+    h1 Moniteurs en Java
+    .side
+      p En Java chaque objet a un verrou
+      p &rarr; Exclusion mutuelle avec le mot clé <code class="java">synchronized</code>
+      br
+      ul
+        li Section critique
+          pre
+            code.java.
+              synchronized(un_objet) {
+                ... // section critique
+              }
+        li Méthode synchronisée
+          pre
+            code.java.
+              class NomClasse {
+                ...
+                public synchronized void une_methode() {
+                  ... // section critique
+                }
+              }
+    .side
+      ul
+        li.uncover Un seul <em>thread</em> peut exécuter une section critique associée à ce verrou
+        br
+        li.uncover Le verrou est lié à l'objet
+          ul
+            li Deux objets d'une même classe ont des verrous différents
+            li Sur une méthode statique, c'est le verrou de la classe qui est utilisé
+
+  section
+    h1 Exemple
+    .side
+      pre
+        code.java.only(data-step=0)
+          include cours02/synchronized1/Tache.java
+        code.java.only
+          include cours02/synchronized2/Tache.java
+        code.java.only
+          include cours02/synchronized3/Tache.java
+        code.java.only
+          include cours02/synchronized4/Tache.java
+        code.java.only
+          include cours02/synchronized5/Tache.java
+    .side
+      pre
+        code.java
+          include cours02/synchronized1/Main.java
+      .only(data-step=0)
+        pre
+          code.bash.
+            $ java Main
+            T1 T1 T1 T1 T1 T2 T2 T2 T2 T2 T2
+            19
+        p <span style="color: red">✖</span> Pas d'exclusion mutuelle
+      .only
+        pre
+          code.bash.
+            $ java Main
+            T2 T1 T1 T2 T2 T2 T2 T2 T2 T2
+            19
+        p <span style="color: red">✖</span> Toujours pas d'exclusion mutuelle
+      .only
+        pre
+          code.bash.
+            $ java Main
+            T2 T2 T2 T2 T1 T2 T1 T2 T1 T2 T1 T2 T1 T2 T1 T2 T1 T1 T1 T1
+            20
+        p <span style="color: green">✔</span> Exclusion mutuelle
+      .only
+        pre
+          code.bash.
+            $ java Main
+            T1 T1 T1 T1 T1 T1 T1 T1 T2 T2 T2 T2 T2 T2 T2 T2 T2 T2
+            20
+        p <span style="color: red">✖</span> Presque, quelques rares pertes de modifications
+      .only
+        pre
+          code.bash.
+            $ java Main
+            T1 T1 T1 T1 T1 T1 T1 T2 T2 T1 T2 T1 T2 T2 T1 T2 T2 T2 T2 T2
+            20
+        p <span style="color: green">✔</span> Exclusion mutuelle
+  section
+    h1 Commentaires
+    ul
+      li Plusieurs méthodes (et blocs) peuvent être synchronisés sur le même objet
+      li.uncover Synchronisation est <em>réentrante</em> : le <em>thread</em> qui possède le verrou peut entrer dans les autres blocs synchronisés
+        pre
+          code.java.
+            public class UneClasse {
+              ...
+              public synchronized void methode1() {
+                ...
+              }
+              public synchronized void methode2() {
+                ...
+              }
+            }
+        p &rarr; Le <em>thread</em> qui possède le verrou pour <code>methode1</code> peut aussi exécuter <code>methode2</code>
+      li.uncover Attention, méthodes statiques synchronisée sur la classe, pas sur l'instance
+      li.uncover Attente d'un verrou non limitée : risque de <em>deadlock</em>
+
+  section
+    h1 Lecteurs / rédacteurs
+    p Le verrouillage avec <code class="java">synchronized</code> est bloquant et ne distingue pas la lecture et l'écriture
+    ul
+      li En général la lecture d'une ressource est <em>thread-safe</em> (pas de synchronisation nécessaire) :
+      ul
+        li Plusieurs lectures en parallèle
+        li Une seule écriture à la fois
+        li Pas de lecture pendant une écriture
+      li <code class="java">synchronized</code> provoque des attentes si plusieurs lectures en même temps
+
+  section
+    h1 L'interface <em>Lock</em>
+    .side
+      img(src="cours02/lock_interface.png")
+      .footnote src : <a href="https://www.javacodegeeks.com/2015/02/java-concurrency-tutorial-locking-explicit-locks.html">Java Code Geeks</a>
+    .side
+      .only(data-step=0)
+        ul
+          li <code class="java">synchronized</code> utilise les verrous <em>implicites</em> des objets
+          li Verrous <em>explicites</em> avec l'interface <code>Lock</code>
+            ul
+              li Utilisation avec <code>lock()</code> et <code>unlock()</code>
+              li <code>unlock()</code> dans un bloc <code>finally</code> pour éviter les blocages
+        br
+        p &rarr; <a href="https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/locks/Lock.html">Documentation</a>
+      .only
+        p Interface <code>ReadWriteLock</code>
+        br
+        ul
+          li Deux méthodes
+            ul
+              li <code>readLock()</code> : verrou en lecture
+              li <code>writeLock()</code> : verrou en écriture
+          li Les verrous sont de type <code>Lock</code>
+          li Plusieurs <em>threads</em> peuvent prendre le verrou en lecture (si pas de verrou en écriture)
+          li Verrou en écriture est exclusif
+        br
+        p &rarr; <a href="https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/locks/ReadWriteLock.html">Documentation</a>
+      .only
+        p Deux classes instantiables
+        ul
+          li <code>ReentrantLock</code>
+            ul
+              li Implémente <code>Lock</code>
+              li Un seul <em>thread</em> peut avoir le verrou
+              li Le verrou est réentrant : <code>lock()</code> passe immédiatement pour le <em>thread</em> qui le possède
+          li <code>ReentrantReadWriteLock</code>
+            ul
+              li Paire de verrous en lecture/écriture
+  section
+    h1 Utilisation de <em>ReentrantLock</em>
+    p Utilisé pour verrouiller et déverrouiller explicitement
+    pre
+      code.java.
+        Lock lock = new ReentrantLock();
+        lock.lock();
+        try {
+          ...   // section critique
+        } finally {
+          lock.unlock();
+        }
+    ul
+      li Un seul <em>thread</em> peut avoir le verrou d'une section critique
+      li Le verrou doit être partagé entre les <em>threads</em> (instantié avant et passé aux <em>threads</em>)
+      li <code>unlock()</code> doit être dans un bloc <code>finally</code> pour éviter le blocage
+
+  section
+    h1 Utilisation de <em>ReadWriteLock</em>
+    .only(data-step=0)
+      pre
+        code.java
+            include cours02/Redacteur.java
+    .only
+      pre
+        code.java
+          include cours02/Lecteur.java
+    .only
+      pre
+        code.java
+          include cours02/Main.java
+      pre
+        code.bash.
+          $ java Main
+          0 0 18 18 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20 20
+          20
+
+  section
+    h1 Flexibilité de <em>Lock</em>
+    p On peut tenter de prendre un verrou sans bloquer si pas disponible
+    pre
+      code.java.
+        Lock lock = new ReentrantLock();
+        if (lock.tryLock()) {
+          // ou lock.tryLock(long time, TimeUnit unit)
+          try {
+            ...   // section critique
+          } finally {
+            lock.unlock();
+          }
+        } else {
+          ...     // actions alternatives
+        }
+
+  section
+    h1 Coopération
+    .side
+      p Les méthodes suivantes permettent aux <em>threads</em> de coopérer pour se synchroniser
+      br
+      ul
+        li.uncover <code>wait()</code> rend le verrou sur l'objet et bloque le <em>thread</em> appelant jusqu'à ce que
+          |  <code>notify()</code> ou <code>notifyAll()</code> soit appelé sur le même objet (ou une
+          |  <em>interruption</em> ou un <em>timeout</em>)
+        li.uncover <code>notify()</code> réveille <em>un</em> <em>thread</em> bloqué par un <code>wait()</code>. Le
+          |  <em>thread</em> débloqué doit reprendre le verrou pour continuer
+        li.uncover <code>notifyAll()</code> réveille <em>tous</em> les <em>threads</em> bloqués. Le
+          |  premier <em>thread</em> qui prend le verrou accède à la section critique.
+    .side
+      ul
+        li Ces méthodes manipulent le verrou associé à l'objet sur lequel elles sont appelées
+        br
+        li Elles ne peuvent être appelées que si le <em>thread</em> possède le <em>moniteur</em> associé à l'objet
+          |  (méthode ou bloc <code class="java">synchronized</code>)
+
+  section
+    h1 Exemple Emetteur / Récepteur
+    .side
+      ul
+        li <em>Emetteurs</em> envoient des données sur une ressource partagée
+        li <em>Récepteurs</em> lisent les données envoyées
+      br
+      ul
+        li La ressource alterne entre deux états :
+          ul
+            li attente lecture (émetteurs bloqués)
+            li attente écriture (récepteurs bloqués)
+
+    .side
+      pre
+        code.java.
+          public class Data {
+            private String packet;
+            private boolean transfer = true;
+
+            public synchronized String receive() {
+              while (transfer) {
+                wait();
+              }
+              transfer = true;
+              String returnPacket = packet;
+              notifyAll();
+              return returnPacket;
+            }
+
+            public synchronized void send(String p){
+              while (!transfer) {
+                wait();
+              }
+              transfer = false;
+              this.packet = p;
+              notifyAll();
+            }
+          }
+
+  section
+    h1 Sémaphores
+    .side
+      p Un <em>sémaphore</em> est un objet ayant :
+      ul
+        li un entier <em>S</em> (nombre de jetons)
+        li deux opérations atomiques
+          ul
+            li <code>V()</code> : incrémente le nombre de jetons
+            li <code>P()</code> : si <em>S</em>>0, décrémente <em>S</em> et passe, sinon bloque jusqu'à ce que <em>S</em>>0
+      br
+    .side
+      ul
+        li Définis par Edsger Dijkstra en 1962
+        li <em>S</em> peut être négatif à l'initialisation
+        li L'opération <code>V()</code> n'est jamais bloquante
+      br
+      .uncover
+        p Exclusion mutuelle :
+        pre
+          code.
+            // sémaphore à 1 jeton
+            P()
+              ...   // section critique
+            V()
+
+  section
+    h1 La classe <em>Semaphore</em>
+    p Dans <code>java.util.concurrent</code>
+    br
+    ul
+      li <code class="java">Semaphore(int permits, boolean fair)</code>
+        <br>Constructeur
+      li <code class="java">void acquire()</code>, <code class="java">void acquire(int permits)</code>
+        <br>Méthode P() (bloquante jusqu'à obtention des jetons)
+      li <code class="java">int availablePermits()</code>
+        <br>Nombre de jetons disponibles
+      li <code class="java">void release()</code>, <code class="java">void release(int permits)</code>
+        <br>Méthode V() (incrémente le nombre de jetons)
+      li <code class="java">boolean tryAcquire()</code>, <code class="java">boolean tryAcquire(int permits)</code>
+        <br>Essaie de prendre des jetons (non bloquante)
+
+
+    br
+    p &rarr; <a href="https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Semaphore.html">Documentation</a>
+
+  section
+    h1 Exemple simple
+    .side
+      pre
+        code.java.
+          public class UneClasse {
+            Semaphore sem = new Semaphore(1, true);
+
+            public void methode1() throws InterruptedException {
+              sem.acquire();
+              ...   // section critique
+              sem.release();
+            }
+
+            public void methode2() throws InterruptedException {
+              sem.acquire();
+              ...   // section critique
+              sem.release();
+            }
+          }
+    .side
+      ul
+        li Un sémaphore à 1 jeton est similaire à un verrou
+        li Mais plusieurs appels à <code>V()</code> sont comptés sur un sémaphore
+        li plusieurs <code>unlock()</code> sur un verrou n'ont pas d'effet
