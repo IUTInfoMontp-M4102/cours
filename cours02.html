@@ -52,7 +52,7 @@
           <div class="footnote">Image: <a href="https://tilics.dmi.unibas.ch/mutex">Things I learned in Computer Science</a></div>
         </div><br>
         <div class="uncover" data-start="1">
-          <p>La section critique d’un programme doit être une opération indivisible, <em>atomique</em> vue de l’extérieur</p>
+          <p>La section critique d'un programme doit être une opération indivisible, <em>atomique</em> vue de l'extérieur</p>
         </div>
       </div>
       <div class="only">
@@ -134,7 +134,7 @@
       <h1>Résumé</h1>
       <div class="side">
         <p>
-          L’<strong>exclusion mutuelle</strong> est une méthode qui permet à un processus ou <em>thread</em> d’utiliser une ressource critique et d’exclure les autres processus de cette activité</p><br>
+          L’<strong>exclusion mutuelle</strong> est une méthode qui permet à un processus ou <em>thread</em> d'utiliser une ressource critique et d'exclure les autres processus de cette activité</p><br>
         <div class="uncover">
           <p>Une <strong>section critique</strong> est une suite d'instructions qui accède à une ressource partagée</p>
           <p>
@@ -148,7 +148,7 @@
             <li>solution uniforme</li>
             <li>temps fini dans la section critique</li>
             <li>une seule tâche en section critique</li>
-            <li>éviter les interblocages (<em>deadlocks</em>) à l’entrée de la section critique</li>
+            <li>éviter les interblocages (<em>deadlocks</em>) à l'entrée de la section critique</li>
             <li>tâche bloquée en dehors de la section critique ne doit pas bloquer</li>
             <li>tâche interrompue en section critique ne doit pas bloquer</li>
           </ul>
@@ -675,6 +675,100 @@ V()
           <li>Mais plusieurs appels à <code>V()</code> sont comptés sur un sémaphore</li>
           <li>plusieurs <code>unlock()</code> sur un verrou n'ont pas d'effet</li>
         </ul>
+      </div>
+    </section>
+    <section>
+      <h1>Variables <em>volatiles</em></h1>
+      <div class="side">
+        <div class="only" data-step="0">
+          <pre> <code class="java">public class TaskRunner {
+  private static int number;
+  private static boolean ready;
+
+  private static class Reader extends Thread {
+    public void run() {
+        while (!ready) {
+            Thread.yield();
+        }
+        System.out.println(number);
+    }
+  }
+
+  public static void main(String[] args) {
+      new Reader().start();
+      number = 42;
+      ready = true;
+  }
+}</code></pre>
+        </div>
+        <div class="only" data-start="1">
+          <pre> <code class="java">public class TaskRunner {
+  private static volatile int number;
+  private static volatile boolean ready;
+
+  private static class Reader extends Thread {
+    public void run() {
+        while (!ready) {
+            Thread.yield();
+        }
+        System.out.println(number);
+    }
+  }
+
+  public static void main(String[] args) {
+      new Reader().start();
+      number = 42;
+      ready = true;
+  }
+}</code></pre>
+        </div>
+      </div>
+      <div class="side">
+        <div class="only" data-step="0">
+          <ul>
+            <li>L'accès à la RAM est « lent » (à l'échelle du processeur)</li>
+            <li>Les <em>threads</em> utilisent un <em>cache</em> pour accélérer les accès fréquents</li>
+            <li>Les écritures ne sont pas toujours exécutées immédiatement</li>
+            <li>Les écritures peuvent être exécutées dans un ordre différent</li>
+          </ul>
+        </div>
+        <div class="only" data-start="1">
+          <ul>
+            <li>Le modificateur <code>volatile</code> interdit ces optimisations</li>
+            <li>Une variable <code>volatile</code> n'est pas placée dans le cache d'un <em>thread</em></li>
+            <li>Lectures et écritures passent par la mémoire partagée entre les <em>threads</em></li>
+            <li>Les écritures sont exécutées immédiatement, dans l'ordre du programme</li>
+          </ul><br>
+          <p class="uncover"><strong>Rmq :</strong> Ces propriétés sont aussi garanties dans un bloc <code>synchronized</code></p>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h1>Variables <em>atomique</em></h1>
+      <div class="side">
+        <pre> <code class="java">// Implémentation matérielle pour garantir l'atomicité
+boolean testAndSet(boolean lock) {
+  boolean valeur = lock;
+  lock = true;
+  return valeur;
+}</code></pre>
+        <pre> <code class="java">boolean lock = false;
+void sectionCritique() {
+  while (testAndSet(lock)) {
+      Thread.yield();
+  }
+  ... // section critique
+  lock = false;
+}</code></pre>
+      </div>
+      <div class="side"> 
+        <p>Classes représentant des valeurs avec des opérations <em>atomiques</em></p>
+        <ul> 
+          <li>Exemples : <code>AtomicBoolean</code>, <code>AtomicInteger</code>, <code>AtomicLong</code>, <code>AtomicReference</code>, <em>etc.</em></li>
+          <li>Gestion efficace par <em>test and set</em></li>
+          <li>La section critique est très courte (peu de conflits)</li>
+        </ul><br>
+        <p><a href="https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/atomic/package-summary.html">Documentation</a></p>
       </div>
     </section>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
